@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Score de Jogo — Metrópole Futsal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f4f3ef;
+      --surface:   #ffffff;
+      --surface2:  #f1efe8;
+      --border:    rgba(0,0,0,0.12);
+      --border2:   rgba(0,0,0,0.22);
+      --text:      #1a1a18;
+      --text2:     #5f5e5a;
+      --text3:     #888780;
+      --green:     #1D9E75;
+      --green-bg:  #e1f5ee;
+      --green-tx:  #0f6e56;
+      --blue:      #185FA5;
+      --blue-bg:   #e6f1fb;
+      --blue-tx:   #0c447c;
+      --amber:     #BA7517;
+      --amber-bg:  #faeeda;
+      --amber-tx:  #854f0b;
+      --red:       #A32D2D;
+      --red-bg:    #fcebeb;
+      --red-tx:    #791f1f;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #1c1c1a;
+        --surface:   #242422;
+        --surface2:  #2c2c2a;
+        --border:    rgba(255,255,255,0.10);
+        --border2:   rgba(255,255,255,0.20);
+        --text:      #e8e6dc;
+        --text2:     #b4b2a9;
+        --text3:     #888780;
+        --green:     #5DCAA5;
+        --green-bg:  #04342c;
+        --green-tx:  #9fe1cb;
+        --blue:      #85B7EB;
+        --blue-bg:   #042c53;
+        --blue-tx:   #b5d4f4;
+        --amber:     #EF9F27;
+        --amber-bg:  #412402;
+        --amber-tx:  #fac775;
+        --red:       #F09595;
+        --red-bg:    #501313;
+        --red-tx:    #f7c1c1;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    header { max-width: 720px; margin: 0 auto 2.5rem; }
+
+    .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: .5rem; }
+
+    .logo-mark {
+      width: 40px; height: 40px;
+      background: var(--text);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg { width: 22px; height: 22px; }
+
+    h1 { font-size: 22px; font-weight: 500; color: var(--text); }
+    .subtitle { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+    .pill {
+      display: inline-block;
+      font-size: 11px; font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 10px;
+    }
+
+    .pill-blue { background: var(--blue-bg); color: var(--blue-tx); }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .section-block { margin-bottom: 2.5rem; }
+
+    .section-heading {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 1rem;
+    }
+
+    .explainer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 560px) { .explainer-grid { grid-template-columns: 1fr; } }
+
+    .explainer-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+    }
+
+    .explainer-card h3 {
+      font-size: 14px; font-weight: 500;
+      color: var(--text);
+      margin-bottom: .5rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .explainer-card p {
+      font-size: 13px; color: var(--text2); line-height: 1.65;
+    }
+
+    .formula-inline {
+      background: var(--surface2);
+      border-radius: var(--radius-md);
+      padding: .5rem .75rem;
+      font-size: 12px;
+      color: var(--text2);
+      font-family: 'Courier New', monospace;
+      margin-top: .75rem;
+      line-height: 1.6;
+    }
+
+    .type-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-green { background: var(--green); }
+    .dot-amber { background: var(--amber); }
+    .dot-red   { background: var(--red); }
+
+    .example-block {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .example-block h3 {
+      font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: .75rem;
+    }
+
+    .athlete-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 0;
+      border-bottom: 0.5px solid var(--border);
+      font-size: 13px;
+    }
+
+    .athlete-row:last-child { border-bottom: none; }
+
+    .ath-label { flex: 1; color: var(--text2); }
+    .ath-qty { min-width: 32px; text-align: center; font-weight: 500; color: var(--text); }
+    .ath-par { min-width: 32px; text-align: center; color: var(--red); font-size: 12px; }
+    .ath-eff {
+      min-width: 48px; text-align: right;
+      font-size: 12px; font-weight: 500;
+    }
+
+    .eff-green { color: var(--green); }
+    .eff-amber { color: var(--amber); }
+    .eff-red   { color: var(--red); }
+
+    .mini-bar-wrap { width: 60px; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .mini-bar { height: 100%; border-radius: 3px; }
+
+    .score-preview {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface2);
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      margin-top: .75rem;
+    }
+
+    .score-big { font-size: 32px; font-weight: 500; color: var(--text); }
+    .score-denom { font-size: 16px; color: var(--text3); }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+    .tab {
+      padding: 6px 18px;
+      font-size: 13px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      background: transparent;
+      color: var(--text2);
+      transition: all .2s;
+      font-family: inherit;
+    }
+
+    .tab.active {
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .stitle {
+      font-size: 14px; font-weight: 500; color: var(--text);
+      margin-bottom: .75rem; padding-bottom: .5rem;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .info-box {
+      background: var(--blue-bg);
+      border: 0.5px solid rgba(24,95,165,.2);
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: 13px; color: var(--blue-tx);
+      margin-bottom: 1rem; line-height: 1.6;
+    }
+
+    .fund-grid-head {
+      display: grid;
+      grid-template-columns: 150px 58px 58px 1fr 54px 58px;
+      gap: 8px;
+      padding-bottom: 6px;
+      font-size: 11px; color: var(--text3);
+    }
+
+    .fund-grid-head span:nth-child(2),
+    .fund-grid-head span:nth-child(3),
+    .fund-grid-head span:nth-child(5),
+    .fund-grid-head span:nth-child(6) { text-align: center; }
+
+    .fund-row {
+      display: grid;
+      grid-template-columns: 150px 58px 58px 1fr 54px 58px;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .fund-row:last-child { border-bottom: none; }
+
+    .fund-label { font-size: 13px; color: var(--text); }
+
+    .tipo-badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 500;
+      padding: 2px 6px;
+      border-radius: var(--radius-md);
+      margin-top: 3px;
+      white-space: nowrap;
+    }
+
+    .tbadge-pos { background: var(--green-bg); color: var(--green-tx); }
+    .tbadge-neg { background: var(--red-bg);   color: var(--red-tx); }
+    .tbadge-ind { background: var(--amber-bg); color: var(--amber-tx); }
+
+    input[type="number"] {
+      width: 100%; text-align: center;
+      font-size: 13px; padding: 5px 6px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      background: var(--surface); color: var(--text);
+      font-family: inherit;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus { outline: none; border-color: var(--blue); }
+
+    input[type="number"]:disabled {
+      opacity: .35; cursor: not-allowed;
+    }
+
+    .eff-bar-wrap { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 3px; }
+    .eff-bar { height: 100%; border-radius: 3px; transition: width .4s, background .3s; }
+    .eff-label { font-size: 11px; color: var(--text3); text-align: right; margin-top: 2px; }
+
+    .total-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
+    .total-pct { font-size: 13px; font-weight: 500; }
+    .tok  { color: var(--green); }
+    .tbad { color: var(--red); }
+    .warn-txt { font-size: 12px; color: var(--amber); text-align: right; margin-top: 4px; }
+
+    .score-display {
+      display: flex; align-items: center; gap: 16px;
+      padding: 1rem; background: var(--surface2);
+      border-radius: var(--radius-md); margin-top: 1rem;
+    }
+
+    .score-num { font-size: 40px; font-weight: 500; color: var(--text); min-width: 36px; }
+    .score-slash { font-size: 18px; color: var(--text3); }
+    .score-wrap { display: flex; align-items: baseline; gap: 4px; }
+
+    .bar-main {
+      height: 10px; background: var(--surface);
+      border-radius: 6px; overflow: hidden;
+      border: 0.5px solid var(--border);
+    }
+
+    .bar-fill { height: 100%; border-radius: 6px; transition: width .4s, background .3s; }
+    .bar-ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    .badge {
+      display: inline-block; font-size: 11px;
+      padding: 3px 10px; border-radius: var(--radius-md);
+      font-weight: 500; white-space: nowrap;
+    }
+
+    .badge-green { background: var(--green-bg); color: var(--green-tx); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber-tx); }
+    .badge-red   { background: var(--red-bg);   color: var(--red-tx); }
+    .badge-gray  { background: var(--surface2); color: var(--text3); }
+
+    .bk-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0; font-size: 13px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .bk-row:last-child { border-bottom: none; }
+    .bk-label { flex: 1; color: var(--text2); }
+    .bk-eff   { font-size: 12px; color: var(--text3); min-width: 44px; text-align: right; }
+    .bk-contrib { font-size: 12px; color: var(--text3); min-width: 56px; text-align: right; }
+
+    .formula-box {
+      background: var(--surface2); border-radius: var(--radius-md);
+      padding: .75rem 1rem; font-size: 12px; color: var(--text2);
+      margin-top: .75rem; font-family: 'Courier New', monospace;
+      line-height: 1.7; word-break: break-all;
+    }
+
+    .divider {
+      border: none; border-top: 0.5px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    footer {
+      max-width: 720px; margin: 3rem auto 0;
+      font-size: 12px; color: var(--text3); text-align: center;
+    }
+
+    @media (max-width: 560px) {
+      .fund-grid-head,
+      .fund-row { grid-template-columns: 120px 50px 50px 1fr 46px 50px; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="var(--bg)" stroke-width="1.5"/>
+        <path d="M12 2L15 8L12 6L9 8Z M12 22L9 16L12 18L15 16Z M2 12L8 9L6 12L8 15Z M22 12L16 15L18 12L16 9Z" fill="var(--bg)" opacity=".7"/>
+        <circle cx="12" cy="12" r="2.5" fill="var(--bg)"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Simulador de Score de Jogo</h1>
+      <div class="subtitle">Metrópole Futsal — performance por quantidade em partida</div>
+    </div>
+  </div>
+  <div class="pill pill-blue">Contexto: Jogo</div>
+</header>
+
+<div class="container">
+
+  <div class="section-block">
+    <div class="section-heading">Como o score de jogo funciona</div>
+
+    <div class="explainer-grid">
+      <div class="explainer-card">
+        <h3><span class="type-dot dot-green"></span>Pares vinculados</h3>
+        <p>Fundamentos que têm um lado certo e um lado errado — passes, chutes e reposições. A eficiência é calculada sobre o total de tentativas do próprio atleta.</p>
+        <div class="formula-inline">
+          eficiência = acertos ÷ (acertos + erros)<br>
+          contrib = eficiência × peso
+        </div>
+      </div>
+      <div class="explainer-card">
+        <h3><span class="type-dot dot-amber"></span>Fundamentos independentes</h3>
+        <p>Fundamentos sem contraparte negativa — bolas roubadas e defesas. O volume é normalizado pelo melhor desempenho registrado no time naquele jogo.</p>
+        <div class="formula-inline">
+          volume = qtd do atleta ÷ melhor do time<br>
+          contrib = volume × peso
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer-card" style="margin-bottom:12px">
+      <h3><span class="type-dot dot-red"></span>Fundamentos negativos independentes</h3>
+      <p>Bolas Perdidas não têm contraparte positiva direta, mas penalizam o score. Quanto mais bolas o atleta perde em relação ao seu volume de ação, menor sua eficiência nesse fundamento.</p>
+      <div class="formula-inline">eficiência = 1 − min(1, bolas_perdidas ÷ ações_totais)</div>
+    </div>
+
+    <div class="explainer-card">
+      <h3>Score final 0–10</h3>
+      <p>Todos os fundamentos contribuem proporcionalmente ao seu peso. O score final é a soma de todas as contribuições, arredondada para inteiro na escala 0–10 — a mesma usada no score de treino.</p>
+      <div class="formula-inline">
+        score_jogo = round( Σ (eficiência_f × peso_f) )   →   0–10 inteiro
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-heading">Exemplo prático — Alexandre (jogador de linha)</div>
+    <div class="example-block">
+      <h3>Dados do jogo</h3>
+      <div class="athlete-row">
+        <span class="ath-label">Passes certos / errados</span>
+        <span class="ath-qty">10</span>
+        <span class="ath-par">/ 2</span>
+        <div class="mini-bar-wrap"><div class="mini-bar" style="width:83%;background:#1D9E75"></div></div>
+        <span class="ath-eff eff-green">83%</span>
+      </div>
+      <div class="athlete-row">
+        <span class="ath-label">Chutes certos / errados</span>
+        <span class="ath-qty">5</span>
+        <span class="ath-par">/ 3</span>
+        <div class="mini-bar-wrap"><div class="mini-bar" style="width:63%;background:#BA7517"></div></div>
+        <span class="ath-eff eff-amber">63%</span>
+      </div>
+      <div class="athlete-row">
+        <span class="ath-label">Bolas perdidas</span>
+        <span class="ath-qty">4</span>
+        <span class="ath-par"></span>
+        <div class="mini-bar-wrap"><div class="mini-bar" style="width:40%;background:#A32D2D"></div></div>
+        <span class="ath-eff eff-red">40%</span>
+      </div>
+      <div class="athlete-row">
+        <span class="ath-label">Bolas roubadas (melhor do time: 5)</span>
+        <span class="ath-qty">3</span>
+        <span class="ath-par"></span>
+        <div class="mini-bar-wrap"><div class="mini-bar" style="width:60%;background:#BA7517"></div></div>
+        <span class="ath-eff eff-amber">60%</span>
+      </div>
+      <div class="score-preview">
+        <div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:2px">Score estimado (pesos iguais)</div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <span class="score-big">6</span>
+            <span class="score-denom">/10</span>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="height:10px;background:var(--surface);border-radius:6px;overflow:hidden;border:0.5px solid var(--border)">
+            <div style="height:100%;width:60%;border-radius:6px;background:#185FA5"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px"><span>0</span><span>5</span><span>10</span></div>
+        </div>
+        <span class="badge badge-green">Bom</span>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:.75rem;line-height:1.6">
+        Os 4 erros de passe e bola não zeraram o score — eles simplesmente reduziram a eficiência do Alexandre naqueles fundamentos. Atletas mais consistentes ficam acima dele sem distorção.
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-block">
+    <div class="section-heading">Simulador interativo</div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="sw('linha')">Jogador de Linha</button>
+      <button class="tab" onclick="sw('goleiro')">Goleiro</button>
+    </div>
+
+    <div id="tab-linha" class="panel active">
+      <div class="info-box">Insira as quantidades registradas no jogo e ajuste os pesos de cada fundamento (total deve somar 100%). O score é recalculado em tempo real.</div>
+      <div class="card">
+        <div class="stitle">Fundamentos — jogador de linha</div>
+        <div class="fund-grid-head">
+          <span>Fundamento</span>
+          <span>Acertos</span>
+          <span>Erros</span>
+          <span>Eficiência</span>
+          <span>Peso %</span>
+          <span>Contrib</span>
+        </div>
+        <div id="linha-fields"></div>
+        <div class="total-row">
+          <span style="font-size:13px;color:var(--text2)">Total de pesos:</span>
+          <span id="linha-totpct" class="total-pct tok">100%</span>
+        </div>
+        <div id="linha-warn" class="warn-txt" style="display:none">Os pesos devem somar 100%</div>
+      </div>
+      <div class="card">
+        <div class="stitle">Score calculado</div>
+        <div id="linha-bk"></div>
+        <div class="score-display">
+          <div>
+            <div style="font-size:13px;color:var(--text2)">Score do jogo</div>
+            <div class="score-wrap">
+              <div class="score-num" id="linha-score">—</div>
+              <span class="score-slash">/10</span>
+            </div>
+          </div>
+          <div style="flex:1">
+            <div class="bar-main"><div class="bar-fill" id="linha-bar" style="width:0%"></div></div>
+            <div class="bar-ticks"><span>0</span><span>5</span><span>10</span></div>
+          </div>
+          <span id="linha-badge" class="badge badge-gray">—</span>
+        </div>
+        <div class="formula-box" id="linha-formula">Preencha as quantidades para ver o cálculo</div>
+      </div>
+    </div>
+
+    <div id="tab-goleiro" class="panel">
+      <div class="info-box">Insira as quantidades registradas no jogo e ajuste os pesos do goleiro (total deve somar 100%). Defesas e Defesas Difíceis são normalizadas pelo melhor do time.</div>
+      <div class="card">
+        <div class="stitle">Fundamentos — goleiro</div>
+        <div class="fund-grid-head">
+          <span>Fundamento</span>
+          <span>Acertos</span>
+          <span>Erros</span>
+          <span>Eficiência</span>
+          <span>Peso %</span>
+          <span>Contrib</span>
+        </div>
+        <div id="goleiro-fields"></div>
+        <div class="total-row">
+          <span style="font-size:13px;color:var(--text2)">Total de pesos:</span>
+          <span id="goleiro-totpct" class="total-pct tok">100%</span>
+        </div>
+        <div id="goleiro-warn" class="warn-txt" style="display:none">Os pesos devem somar 100%</div>
+      </div>
+      <div class="card">
+        <div class="stitle">Score calculado</div>
+        <div id="goleiro-bk"></div>
+        <div class="score-display">
+          <div>
+            <div style="font-size:13px;color:var(--text2)">Score do jogo</div>
+            <div class="score-wrap">
+              <div class="score-num" id="goleiro-score">—</div>
+              <span class="score-slash">/10</span>
+            </div>
+          </div>
+          <div style="flex:1">
+            <div class="bar-main"><div class="bar-fill" id="goleiro-bar" style="width:0%"></div></div>
+            <div class="bar-ticks"><span>0</span><span>5</span><span>10</span></div>
+          </div>
+          <span id="goleiro-badge" class="badge badge-gray">—</span>
+        </div>
+        <div class="formula-box" id="goleiro-formula">Preencha as quantidades para ver o cálculo</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-heading">Separação de contextos</div>
+    <div class="explainer-grid">
+      <div class="explainer-card">
+        <h3>Score de Jogo</h3>
+        <p>Baseado em <strong style="font-weight:500">quantidade</strong> — passes certos, chutes, bolas roubadas. Calculado por partida. Reflete a atuação real dentro de campo.</p>
+      </div>
+      <div class="explainer-card">
+        <h3>Score de Treino</h3>
+        <p>Baseado em <strong style="font-weight:500">nota subjetiva</strong> (0–10) por fundamento — avaliação do treinador por sessão. Totalmente independente do score de jogo.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Metrópole Futsal &mdash; simulador de score de jogo &mdash; 2025</footer>
+
+<script>
+  const linhaFunds = [
+    {k:'passe_c', l:'Passes certos',    tipo:'par',      par:'passe_e', peso:25},
+    {k:'passe_e', l:'Passes errados',   tipo:'err',      par:'passe_c', peso:0},
+    {k:'chute_c', l:'Chutes certos',    tipo:'par',      par:'chute_e', peso:30},
+    {k:'chute_e', l:'Chutes errados',   tipo:'err',      par:'chute_c', peso:0},
+    {k:'bola_p',  l:'Bolas perdidas',   tipo:'err_solo', par:null,      peso:20},
+    {k:'bola_r',  l:'Bolas roubadas',   tipo:'ind',      par:null,      peso:25},
+  ];
+
+  const goleiroFunds = [
+    {k:'def',   l:'Defesas',             tipo:'ind', par:null,    peso:30},
+    {k:'def_d', l:'Defesas difíceis',    tipo:'ind', par:null,    peso:30},
+    {k:'rep_c', l:'Reposições certas',   tipo:'par', par:'rep_e', peso:25},
+    {k:'rep_e', l:'Reposições erradas',  tipo:'err', par:'rep_c', peso:0},
+    {k:'gol_s', l:'Gols sofridos',       tipo:'err_solo', par:null, peso:15},
+  ];
+
+  function barColor(pct) {
+    if (pct >= 75) return '#1D9E75';
+    if (pct >= 50) return '#185FA5';
+    if (pct >= 25) return '#BA7517';
+    return '#A32D2D';
+  }
+
+  function getVal(id) {
+    const el = document.getElementById(id);
+    return el ? (parseFloat(el.value) || 0) : 0;
+  }
+
+  function initFields(funds, prefix) {
+    const c = document.getElementById(prefix + '-fields');
+    funds.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'fund-row';
+
+      const isErr     = f.tipo === 'err';
+      const isPar     = f.tipo === 'par';
+      const isInd     = f.tipo === 'ind';
+      const isErrSolo = f.tipo === 'err_solo';
+
+      let badge = '';
+      if (isPar)     badge = '<span class="tipo-badge tbadge-pos">par +</span>';
+      if (isErr)     badge = '<span class="tipo-badge tbadge-neg">par −</span>';
+      if (isInd)     badge = '<span class="tipo-badge tbadge-ind">indep.</span>';
+      if (isErrSolo) badge = '<span class="tipo-badge tbadge-neg">negativo</span>';
+
+      const parColId = `${prefix}-parcol-${f.k}`;
+
+      row.innerHTML = `
+        <div>
+          <div class="fund-label">${f.l}</div>
+          ${badge}
+        </div>
+        <input type="number" id="${prefix}-q-${f.k}" min="0" step="1" placeholder="0" oninput="calc('${prefix}')">
+        <div id="${parColId}" style="text-align:center;font-size:13px;color:var(--text3)">—</div>
+        <div>
+          <div class="eff-bar-wrap"><div class="eff-bar" id="${prefix}-ebar-${f.k}" style="width:0%"></div></div>
+          <div class="eff-label" id="${prefix}-eff-${f.k}">—</div>
+        </div>
+        <input type="number" id="${prefix}-w-${f.k}" min="0" max="100" step="1" value="${f.peso}"
+          ${isErr ? 'disabled' : `oninput="calc('${prefix}')"`}>
+        <div class="eff-label" id="${prefix}-contrib-${f.k}">—</div>
+      `;
+      c.appendChild(row);
+    });
+  }
+
+  function calc(prefix) {
+    const funds = prefix === 'linha' ? linhaFunds : goleiroFunds;
+
+    const indFunds = funds.filter(f => f.tipo === 'ind');
+    const indMaxes = {};
+    indFunds.forEach(f => {
+      indMaxes[f.k] = Math.max(1, getVal(prefix + '-q-' + f.k));
+    });
+
+    const totalActions = funds
+      .filter(f => f.tipo === 'par' || f.tipo === 'err')
+      .reduce((s, f) => s + getVal(prefix + '-q-' + f.k), 0);
+
+    let totalPeso = 0, totalContrib = 0, hasAny = false;
+    const parts = [];
+
+    funds.forEach(f => {
+      const qtd = getVal(prefix + '-q-' + f.k);
+      const w   = getVal(prefix + '-w-' + f.k);
+      if (f.tipo !== 'err') totalPeso += w;
+
+      let eff = 0, contrib = 0, effPct = '—';
+
+      if (f.tipo === 'par') {
+        const errQtd = getVal(prefix + '-q-' + f.par);
+        const total  = qtd + errQtd;
+        eff     = total > 0 ? qtd / total : 0;
+        contrib = eff * (w / 100) * 10;
+        effPct  = total > 0 ? Math.round(eff * 100) + '%' : '—';
+        const parCol = document.getElementById(prefix + '-parcol-' + f.k);
+        if (parCol) parCol.textContent = errQtd > 0 ? errQtd : '0';
+        if (qtd > 0 || errQtd > 0) hasAny = true;
+      } else if (f.tipo === 'ind') {
+        const mx = indMaxes[f.k];
+        eff     = qtd / mx;
+        contrib = eff * (w / 100) * 10;
+        effPct  = Math.round(eff * 100) + '%';
+        const parCol = document.getElementById(prefix + '-parcol-' + f.k);
+        if (parCol) parCol.textContent = '—';
+        if (qtd > 0) hasAny = true;
+      } else if (f.tipo === 'err_solo') {
+        const base = Math.max(1, totalActions > 0 ? totalActions : 10);
+        eff     = 1 - Math.min(1, qtd / base);
+        contrib = eff * (w / 100) * 10;
+        effPct  = Math.round(eff * 100) + '%';
+        const parCol = document.getElementById(prefix + '-parcol-' + f.k);
+        if (parCol) parCol.textContent = '—';
+        if (qtd > 0) hasAny = true;
+      }
+
+      if (f.tipo !== 'err') {
+        totalContrib += contrib;
+        const effPct100 = eff * 100;
+        const ebar = document.getElementById(prefix + '-ebar-' + f.k);
+        const elab = document.getElementById(prefix + '-eff-'  + f.k);
+        const clab = document.getElementById(prefix + '-contrib-' + f.k);
+        if (ebar) { ebar.style.width = Math.round(effPct100) + '%'; ebar.style.background = barColor(effPct100); }
+        if (elab) elab.textContent = effPct;
+        if (clab) clab.textContent = hasAny || contrib > 0 ? contrib.toFixed(2) : '—';
+        parts.push({ l: f.l, eff, effPct, contrib, w });
+      } else {
+        const elab = document.getElementById(prefix + '-eff-'  + f.k);
+        const clab = document.getElementById(prefix + '-contrib-' + f.k);
+        if (elab) elab.textContent = '—';
+        if (clab) clab.textContent = '—';
+      }
+    });
+
+    const pctOk = Math.round(totalPeso) === 100;
+    const tEl   = document.getElementById(prefix + '-totpct');
+    tEl.textContent = Math.round(totalPeso) + '%';
+    tEl.className   = 'total-pct ' + (pctOk ? 'tok' : 'tbad');
+    document.getElementById(prefix + '-warn').style.display = pctOk ? 'none' : 'block';
+
+    const scoreInt = Math.min(10, Math.max(0, Math.round(totalContrib)));
+    document.getElementById(prefix + '-score').textContent = hasAny ? scoreInt : '—';
+
+    const bar = document.getElementById(prefix + '-bar');
+    bar.style.width      = (hasAny ? scoreInt * 10 : 0) + '%';
+    bar.style.background = hasAny ? barColor(scoreInt * 10) : '#888';
+
+    let bc = 'badge-gray', bl = '—';
+    if (hasAny) {
+      if      (scoreInt >= 8) { bc = 'badge-green'; bl = 'Excelente'; }
+      else if (scoreInt >= 6) { bc = 'badge-green'; bl = 'Bom'; }
+      else if (scoreInt >= 4) { bc = 'badge-amber'; bl = 'Regular'; }
+      else                    { bc = 'badge-red';   bl = 'Abaixo'; }
+    }
+    const badge = document.getElementById(prefix + '-badge');
+    badge.className = 'badge ' + bc;
+    badge.textContent = bl;
+
+    document.getElementById(prefix + '-bk').innerHTML = parts.map(p => `
+      <div class="bk-row">
+        <span class="bk-label">${p.l}</span>
+        <div style="flex:1;margin:0 8px">
+          <div class="eff-bar-wrap" style="height:4px">
+            <div class="eff-bar" style="width:${Math.round(p.eff*100)}%;background:${barColor(p.eff*100)}"></div>
+          </div>
+        </div>
+        <span class="bk-eff">${p.effPct}</span>
+        <span class="bk-contrib">+${p.contrib.toFixed(2)}</span>
+      </div>
+    `).join('');
+
+    const fEl = document.getElementById(prefix + '-formula');
+    if (hasAny && pctOk) {
+      const expr = parts.map(p => `${p.effPct}×${p.w}%`).join(' + ');
+      fEl.textContent = `(${expr}) = ${totalContrib.toFixed(2)} → arredonda → ${scoreInt}`;
+    } else {
+      fEl.textContent = 'Preencha as quantidades para ver o cálculo';
+    }
+  }
+
+  function sw(t) {
+    ['linha', 'goleiro'].forEach((name, i) => {
+      document.querySelectorAll('.tab')[i].classList.toggle('active', name === t);
+      document.getElementById('tab-' + name).classList.toggle('active', name === t);
+    });
+  }
+
+  initFields(linhaFunds,   'linha');
+  initFields(goleiroFunds, 'goleiro');
+  calc('linha');
+  calc('goleiro');
+</script>
+</body>
+</html>
