@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Score de Treino — Metrópole Futsal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f4f3ef;
+      --surface:   #ffffff;
+      --surface2:  #f1efe8;
+      --border:    rgba(0,0,0,0.12);
+      --border2:   rgba(0,0,0,0.22);
+      --text:      #1a1a18;
+      --text2:     #5f5e5a;
+      --text3:     #888780;
+      --green:     #1D9E75;
+      --green-bg:  #e1f5ee;
+      --green-tx:  #0f6e56;
+      --blue:      #185FA5;
+      --amber:     #BA7517;
+      --amber-bg:  #faeeda;
+      --amber-tx:  #854f0b;
+      --red:       #A32D2D;
+      --red-bg:    #fcebeb;
+      --red-tx:    #791f1f;
+      --info-bg:   #e6f1fb;
+      --info-tx:   #0c447c;
+      --info-bd:   rgba(24,95,165,0.25);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #1c1c1a;
+        --surface:   #242422;
+        --surface2:  #2c2c2a;
+        --border:    rgba(255,255,255,0.10);
+        --border2:   rgba(255,255,255,0.20);
+        --text:      #e8e6dc;
+        --text2:     #b4b2a9;
+        --text3:     #888780;
+        --green:     #5DCAA5;
+        --green-bg:  #04342c;
+        --green-tx:  #9fe1cb;
+        --blue:      #85B7EB;
+        --amber:     #EF9F27;
+        --amber-bg:  #412402;
+        --amber-tx:  #fac775;
+        --red:       #F09595;
+        --red-bg:    #501313;
+        --red-tx:    #f7c1c1;
+        --info-bg:   #042c53;
+        --info-tx:   #b5d4f4;
+        --info-bd:   rgba(133,183,235,0.2);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header { max-width: 680px; margin: 0 auto 2rem; }
+
+    .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: .5rem; }
+
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: var(--text);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg { width: 20px; height: 20px; }
+
+    h1 { font-size: 20px; font-weight: 500; color: var(--text); }
+    .subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+    .context-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--green-bg);
+      color: var(--green-tx);
+      margin-top: 8px;
+    }
+
+    .container { max-width: 680px; margin: 0 auto; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+    .tab {
+      padding: 6px 16px;
+      font-size: 13px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      background: transparent;
+      color: var(--text2);
+      transition: all .2s;
+      font-family: inherit;
+    }
+
+    .tab.active {
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: .75rem;
+      padding-bottom: .5rem;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .info-box {
+      background: var(--info-bg);
+      border: 0.5px solid var(--info-bd);
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: 13px;
+      color: var(--info-tx);
+      margin-bottom: 1rem;
+    }
+
+    .fund-header {
+      display: grid;
+      grid-template-columns: 130px 1fr 70px 70px;
+      gap: 12px;
+      padding-bottom: 6px;
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .fund-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 70px 70px;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .fund-row:last-child { border-bottom: none; }
+
+    .fund-label { font-size: 13px; color: var(--text); }
+    .fund-label.missing { color: var(--red); }
+
+    .score-bar-wrap { height: 6px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .score-bar { height: 100%; border-radius: 4px; transition: width .4s ease, background .3s; }
+
+    input[type="number"] {
+      width: 100%;
+      text-align: center;
+      font-size: 13px;
+      padding: 5px 8px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type="number"]:focus { outline: none; border-color: var(--blue); }
+    input[type="number"].empty { border-color: var(--red); background: var(--red-bg); color: var(--red-tx); }
+
+    .total-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
+    .total-pct { font-size: 13px; font-weight: 500; }
+    .total-pct.ok  { color: var(--green); }
+    .total-pct.bad { color: var(--red); }
+    .warn { font-size: 12px; color: var(--amber); margin-top: .5rem; text-align: right; }
+
+    .breakdown { margin-top: 1rem; }
+    .breakdown-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 0; font-size: 13px;
+      border-bottom: 0.5px solid var(--border); gap: 8px;
+    }
+    .breakdown-row:last-child { border-bottom: none; }
+    .breakdown-left { flex: 1; color: var(--text2); }
+    .breakdown-left.danger { color: var(--red); }
+    .missing-tag { font-size: 11px; color: var(--red); margin-left: 6px; }
+    .bk-bar-wrap { width: 80px; flex-shrink: 0; }
+    .bk-val { font-size: 12px; color: var(--text3); min-width: 70px; text-align: right; flex-shrink: 0; }
+
+    .score-display {
+      display: flex; align-items: center; gap: 16px;
+      margin-top: 1rem; padding: 1rem;
+      background: var(--surface2); border-radius: var(--radius-md);
+    }
+
+    .score-num { font-size: 40px; font-weight: 500; color: var(--text); min-width: 32px; }
+    .score-slash { font-size: 18px; color: var(--text3); }
+    .score-wrap { display: flex; align-items: baseline; gap: 4px; }
+    .score-label { font-size: 13px; color: var(--text2); }
+    .bar-main-wrap { flex: 1; }
+    .bar-main { height: 10px; background: var(--surface2); border-radius: 6px; overflow: hidden; border: 0.5px solid var(--border); }
+    .bar-main-fill { height: 100%; border-radius: 6px; transition: width .4s ease, background .3s; }
+    .bar-ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    .badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: var(--radius-md); font-weight: 500; white-space: nowrap; }
+    .badge-green { background: var(--green-bg); color: var(--green-tx); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber-tx); }
+    .badge-red   { background: var(--red-bg);   color: var(--red-tx); }
+    .badge-gray  { background: var(--surface2); color: var(--text3); }
+
+    .formula-box {
+      background: var(--surface2); border-radius: var(--radius-md);
+      padding: .75rem 1rem; font-size: 12px; color: var(--text2);
+      margin-top: .75rem; font-family: 'Courier New', monospace;
+      line-height: 1.7; word-break: break-all;
+    }
+
+    .ex-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 0; font-size: 13px;
+      border-bottom: 0.5px solid var(--border); gap: 12px;
+    }
+    .ex-row:last-child { border-bottom: none; }
+    .ex-row span:first-child { color: var(--text2); flex: 1; }
+
+    footer { max-width: 680px; margin: 2rem auto 0; font-size: 12px; color: var(--text3); text-align: center; }
+
+    @media (max-width: 520px) {
+      .fund-header, .fund-row { grid-template-columns: 100px 1fr 56px 56px; }
+      .bk-bar-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="var(--bg)" stroke-width="1.5"/>
+        <path d="M12 2L15 8L12 6L9 8Z M12 22L9 16L12 18L15 16Z M2 12L8 9L6 12L8 15Z M22 12L16 15L18 12L16 9Z" fill="var(--bg)" opacity=".7"/>
+        <circle cx="12" cy="12" r="2.5" fill="var(--bg)"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Simulador de Score de Treino</h1>
+      <div class="subtitle">Metrópole Futsal — avaliação por sessão de treino</div>
+    </div>
+  </div>
+  <div class="context-pill">Contexto: Treino</div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('linha')">Jogador de Linha</button>
+    <button class="tab" onclick="switchTab('goleiro')">Goleiro</button>
+    <button class="tab" onclick="switchTab('formula')">Como funciona</button>
+  </div>
+
+  <!-- LINHA -->
+  <div id="tab-linha" class="panel active">
+    <div class="info-box">Configure os pesos de cada fundamento avaliado no treino (total deve somar 100%). Fundamento sem nota recebe 0 e penaliza o score da sessão.</div>
+    <div class="card">
+      <div class="section-title">Fundamentos de treino — jogador de linha</div>
+      <div class="fund-header">
+        <span>Fundamento</span><span></span>
+        <span style="text-align:center">Peso (%)</span>
+        <span style="text-align:center">Nota (0–10)</span>
+      </div>
+      <div id="linha-fields"></div>
+      <div class="total-row">
+        <span class="score-label">Total de pesos:</span>
+        <span id="linha-total-pct" class="total-pct ok">100%</span>
+      </div>
+      <div id="linha-pct-warn" class="warn" style="display:none">Os pesos devem somar exatamente 100%</div>
+    </div>
+    <div class="card">
+      <div class="section-title">Score da sessão de treino</div>
+      <div id="linha-breakdown" class="breakdown"></div>
+      <div class="score-display">
+        <div>
+          <div class="score-label">Score do treino</div>
+          <div class="score-wrap">
+            <div class="score-num" id="linha-score">—</div>
+            <span class="score-slash">/10</span>
+          </div>
+        </div>
+        <div class="bar-main-wrap">
+          <div class="bar-main"><div class="bar-main-fill" id="linha-bar" style="width:0%"></div></div>
+          <div class="bar-ticks"><span>0</span><span>5</span><span>10</span></div>
+        </div>
+        <span id="linha-badge" class="badge badge-gray">—</span>
+      </div>
+      <div class="formula-box" id="linha-formula">Preencha as notas para ver o cálculo</div>
+    </div>
+  </div>
+
+  <!-- GOLEIRO -->
+  <div id="tab-goleiro" class="panel">
+    <div class="info-box">Configure os pesos dos fundamentos de treino do goleiro (total deve somar 100%). Fundamento sem nota recebe 0 e penaliza o score da sessão.</div>
+    <div class="card">
+      <div class="section-title">Fundamentos de treino — goleiro</div>
+      <div class="fund-header">
+        <span>Fundamento</span><span></span>
+        <span style="text-align:center">Peso (%)</span>
+        <span style="text-align:center">Nota (0–10)</span>
+      </div>
+      <div id="goleiro-fields"></div>
+      <div class="total-row">
+        <span class="score-label">Total de pesos:</span>
+        <span id="goleiro-total-pct" class="total-pct ok">100%</span>
+      </div>
+      <div id="goleiro-pct-warn" class="warn" style="display:none">Os pesos devem somar exatamente 100%</div>
+    </div>
+    <div class="card">
+      <div class="section-title">Score da sessão de treino</div>
+      <div id="goleiro-breakdown" class="breakdown"></div>
+      <div class="score-display">
+        <div>
+          <div class="score-label">Score do treino</div>
+          <div class="score-wrap">
+            <div class="score-num" id="goleiro-score">—</div>
+            <span class="score-slash">/10</span>
+          </div>
+        </div>
+        <div class="bar-main-wrap">
+          <div class="bar-main"><div class="bar-main-fill" id="goleiro-bar" style="width:0%"></div></div>
+          <div class="bar-ticks"><span>0</span><span>5</span><span>10</span></div>
+        </div>
+        <span id="goleiro-badge" class="badge badge-gray">—</span>
+      </div>
+      <div class="formula-box" id="goleiro-formula">Preencha as notas para ver o cálculo</div>
+    </div>
+  </div>
+
+  <!-- FORMULA -->
+  <div id="tab-formula" class="panel">
+    <div class="card">
+      <div class="section-title">Fórmula de cálculo</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7">O score de treino é a <strong style="font-weight:500;color:var(--text)">média ponderada das notas</strong> lançadas pelo treinador em cada fundamento da sessão. Fundamentos sem nota entram como <strong style="font-weight:500;color:var(--red)">zero</strong>, penalizando sessões avaliadas de forma incompleta.</p>
+      <div class="formula-box">
+        contrib_f    = nota_f × (peso_f ÷ 100)<br>
+        score_treino = round( Σ contrib_f )   →   0–10 inteiro<br>
+        <span style="color:var(--red)">nota ausente → contrib_f = 0  (penalidade)</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Exemplo de equalização — pesos iguais (20% cada)</div>
+      <div class="ex-row">
+        <span>Atleta A — nota 10 em 1 fundamento, sem nota nos outros 4</span>
+        <span class="badge badge-red">2/10</span>
+      </div>
+      <div class="ex-row">
+        <span>Atleta B — nota 5 em todos os 5 fundamentos</span>
+        <span class="badge badge-amber">5/10</span>
+      </div>
+      <div class="ex-row">
+        <span>Atleta C — nota 7 em todos os 5 fundamentos</span>
+        <span class="badge badge-green">7/10</span>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:.75rem">Consistência em todos os fundamentos durante o treino sempre supera um resultado isolado.</p>
+    </div>
+    <div class="card">
+      <div class="section-title">Scores separados por contexto</div>
+      <div class="ex-row">
+        <span style="font-weight:500;color:var(--text)">Score de Treino</span>
+        <span style="font-size:13px;color:var(--green)">Este simulador — calculado por sessão</span>
+      </div>
+      <div class="ex-row" style="border:none">
+        <span style="color:var(--text2)">Score de Jogo</span>
+        <span style="font-size:13px;color:var(--text3)">Calculado por partida — independente</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Metrópole Futsal &mdash; simulador de score de treino &mdash; 2025</footer>
+
+<script>
+  const linhaFunds = [
+    {k:'drible',         l:'Drible'},
+    {k:'passe',          l:'Passe'},
+    {k:'posicionamento', l:'Posicionamento'},
+    {k:'defesa',         l:'Defesa'},
+    {k:'treino',         l:'Treino'},
+  ];
+  const goleiroFunds = [
+    {k:'posicionamento', l:'Posicionamento'},
+    {k:'tecnica',        l:'Técnica'},
+    {k:'saida',          l:'Saída'},
+  ];
+
+  function color(s) {
+    if (s >= 8) return '#1D9E75';
+    if (s >= 6) return '#185FA5';
+    if (s >= 4) return '#BA7517';
+    return '#A32D2D';
+  }
+
+  function initFields(funds, prefix, defaultPeso) {
+    const c = document.getElementById(prefix + '-fields');
+    funds.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'fund-row';
+      row.innerHTML = `
+        <span class="fund-label" id="${prefix}-lbl-${f.k}">${f.l}</span>
+        <div class="score-bar-wrap"><div class="score-bar" id="${prefix}-fbar-${f.k}" style="width:0%"></div></div>
+        <input type="number" id="${prefix}-w-${f.k}" min="0" max="100" step="1" value="${defaultPeso}" oninput="calc('${prefix}')">
+        <input type="number" id="${prefix}-n-${f.k}" min="0" max="10"  step="1" placeholder="—"          oninput="calc('${prefix}')">
+      `;
+      c.appendChild(row);
+    });
+  }
+
+  function calc(prefix) {
+    const funds = prefix === 'linha' ? linhaFunds : goleiroFunds;
+    let totalPeso = 0, totalContrib = 0, hasAny = false;
+    const parts = [];
+
+    funds.forEach(f => {
+      const w    = parseFloat(document.getElementById(prefix + '-w-' + f.k).value) || 0;
+      const nEl  = document.getElementById(prefix + '-n-' + f.k);
+      const nVal = nEl.value.trim();
+      const n    = nVal === '' ? null : parseFloat(nVal);
+      const miss = n === null || isNaN(n);
+      const contrib = miss ? 0 : n * (w / 100);
+      totalPeso    += w;
+      totalContrib += contrib;
+      if (!miss) hasAny = true;
+      nEl.classList.toggle('empty', miss);
+      document.getElementById(prefix + '-lbl-' + f.k).classList.toggle('missing', miss);
+      const fb = document.getElementById(prefix + '-fbar-' + f.k);
+      fb.style.width      = miss ? '0%' : Math.round((n / 10) * 100) + '%';
+      fb.style.background = miss ? '#A32D2D' : color(n);
+      parts.push({ l: f.l, w, n, contrib, miss });
+    });
+
+    const pctOk = Math.round(totalPeso) === 100;
+    const tEl = document.getElementById(prefix + '-total-pct');
+    tEl.textContent = Math.round(totalPeso) + '%';
+    tEl.className   = 'total-pct ' + (pctOk ? 'ok' : 'bad');
+    document.getElementById(prefix + '-pct-warn').style.display = pctOk ? 'none' : 'block';
+
+    const scoreInt = Math.min(10, Math.max(0, Math.round(totalContrib)));
+    document.getElementById(prefix + '-score').textContent = hasAny ? scoreInt : '—';
+
+    const bar = document.getElementById(prefix + '-bar');
+    bar.style.width      = (hasAny ? scoreInt * 10 : 0) + '%';
+    bar.style.background = hasAny ? color(scoreInt) : '#888';
+
+    let bc = 'badge-gray', bl = '—';
+    if (hasAny) {
+      if      (scoreInt >= 8) { bc = 'badge-green'; bl = 'Excelente'; }
+      else if (scoreInt >= 6) { bc = 'badge-green'; bl = 'Bom'; }
+      else if (scoreInt >= 4) { bc = 'badge-amber'; bl = 'Regular'; }
+      else                    { bc = 'badge-red';   bl = 'Abaixo'; }
+    }
+    const badge = document.getElementById(prefix + '-badge');
+    badge.className   = 'badge ' + bc;
+    badge.textContent = bl;
+
+    document.getElementById(prefix + '-breakdown').innerHTML = parts.map(p => `
+      <div class="breakdown-row">
+        <span class="breakdown-left ${p.miss ? 'danger' : ''}">
+          ${p.l}${p.miss ? '<span class="missing-tag">sem nota → 0</span>' : ''}
+        </span>
+        <div class="bk-bar-wrap">
+          <div class="score-bar-wrap" style="height:4px">
+            <div class="score-bar" style="width:${p.miss ? 0 : Math.round((p.n/10)*100)}%;background:${p.miss ? '#A32D2D' : color(p.n)}"></div>
+          </div>
+        </div>
+        <span class="bk-val">${p.miss ? '0 (ausente)' : p.n} × ${p.w}% = ${p.contrib.toFixed(2)}</span>
+      </div>
+    `).join('');
+
+    const fEl = document.getElementById(prefix + '-formula');
+    if (hasAny && pctOk) {
+      const expr = parts.map(p => `${p.miss ? 0 : p.n}×${p.w}%`).join(' + ');
+      fEl.textContent = `(${expr}) = ${totalContrib.toFixed(2)} → arredonda → ${scoreInt}`;
+    } else {
+      fEl.textContent = 'Preencha as notas para ver o cálculo';
+    }
+  }
+
+  function switchTab(t) {
+    ['linha', 'goleiro', 'formula'].forEach((name, i) => {
+      document.querySelectorAll('.tab')[i].classList.toggle('active', name === t);
+      document.getElementById('tab-' + name).classList.toggle('active', name === t);
+    });
+  }
+
+  initFields(linhaFunds,   'linha',   20);
+  initFields(goleiroFunds, 'goleiro', 34);
+  document.getElementById('goleiro-w-saida').value = 32;
+  calc('linha');
+  calc('goleiro');
+</script>
+</body>
+</html>
